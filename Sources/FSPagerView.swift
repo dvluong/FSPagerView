@@ -78,7 +78,7 @@ public protocol FSPagerViewDelegate: NSObjectProtocol {
 open class FSPagerView: UIView,UICollectionViewDataSource,UICollectionViewDelegate {
     
     // MARK: - Public properties
-
+    
     /// The object that acts as the data source of the pager view.
     @IBOutlet open weak var dataSource: FSPagerViewDataSource?
     
@@ -132,13 +132,6 @@ open class FSPagerView: UIView,UICollectionViewDataSource,UICollectionViewDelega
     /// An unsigned integer value that determines the deceleration distance of the pager view, which indicates the number of passing items during the deceleration. When the value of this property is FSPagerView.automaticDistance, the actual 'distance' is automatically calculated according to the scrolling speed of the pager view. Default is 1.
     @IBInspectable
     open var decelerationDistance: UInt = 1
-    
-    /// A Boolean value that determines whether scrolling is enabled.
-    @IBInspectable
-    open var isScrollEnabled: Bool {
-        set { self.collectionView.isScrollEnabled = newValue }
-        get { return self.collectionView.isScrollEnabled }
-    }
     
     /// A Boolean value that controls whether the pager view bounces past the edge of content and back again.
     @IBInspectable
@@ -301,12 +294,12 @@ open class FSPagerView: UIView,UICollectionViewDataSource,UICollectionViewDelega
     }
     
     #endif
-
+    
     deinit {
         self.collectionView.dataSource = nil
         self.collectionView.delegate = nil
     }
-
+    
     // MARK: - UICollectionViewDataSource
     
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -535,16 +528,6 @@ open class FSPagerView: UIView,UICollectionViewDataSource,UICollectionViewDelega
         return indexPath.item
     }
     
-    /// Returns the visible cell at the specified index.
-    ///
-    /// - Parameter index: The index that specifies the position of the cell.
-    /// - Returns: The cell object at the corresponding position or nil if the cell is not visible or index is out of range.
-    @objc(cellForItemAtIndex:)
-    open func cellForItem(at index: Int) -> FSPagerViewCell? {
-        let indexPath = self.nearbyIndexPath(for: index)
-        return self.collectionView.cellForItem(at: indexPath) as? FSPagerViewCell
-    }
-    
     // MARK: - Private functions
     
     fileprivate func commonInit() {
@@ -572,7 +555,7 @@ open class FSPagerView: UIView,UICollectionViewDataSource,UICollectionViewDelega
             return
         }
         self.timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.automaticSlidingInterval), target: self, selector: #selector(self.flipNext(sender:)), userInfo: nil, repeats: true)
-        RunLoop.current.add(self.timer!, forMode: .common)
+        RunLoop.current.add(self.timer!, forMode: .commonModes)
     }
     
     @objc

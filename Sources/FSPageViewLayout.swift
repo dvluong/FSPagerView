@@ -43,7 +43,7 @@ class FSPagerViewLayout: UICollectionViewLayout {
     
     deinit {
         #if !os(tvOS)
-        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
         #endif
     }
     
@@ -57,7 +57,7 @@ class FSPagerViewLayout: UICollectionViewLayout {
         self.needsReprepare = false
         
         self.collectionViewSize = collectionView.frame.size
-
+        
         // Calculate basic parameters/variables
         self.numberOfSections = pagerView.numberOfSections(in: collectionView)
         self.numberOfItems = pagerView.collectionView(collectionView, numberOfItemsInSection: 0)
@@ -83,18 +83,18 @@ class FSPagerViewLayout: UICollectionViewLayout {
         self.contentSize = {
             let numberOfItems = self.numberOfItems*self.numberOfSections
             switch self.scrollDirection {
-                case .horizontal:
-                    var contentSizeWidth: CGFloat = self.leadingSpacing*2 // Leading & trailing spacing
-                    contentSizeWidth += CGFloat(numberOfItems-1)*self.actualInteritemSpacing // Interitem spacing
-                    contentSizeWidth += CGFloat(numberOfItems)*self.actualItemSize.width // Item sizes
-                    let contentSize = CGSize(width: contentSizeWidth, height: collectionView.frame.height)
-                    return contentSize
-                case .vertical:
-                    var contentSizeHeight: CGFloat = self.leadingSpacing*2 // Leading & trailing spacing
-                    contentSizeHeight += CGFloat(numberOfItems-1)*self.actualInteritemSpacing // Interitem spacing
-                    contentSizeHeight += CGFloat(numberOfItems)*self.actualItemSize.height // Item sizes
-                    let contentSize = CGSize(width: collectionView.frame.width, height: contentSizeHeight)
-                    return contentSize
+            case .horizontal:
+                var contentSizeWidth: CGFloat = self.leadingSpacing*2 // Leading & trailing spacing
+                contentSizeWidth += CGFloat(numberOfItems-1)*self.actualInteritemSpacing // Interitem spacing
+                contentSizeWidth += CGFloat(numberOfItems)*self.actualItemSize.width // Item sizes
+                let contentSize = CGSize(width: contentSizeWidth, height: collectionView.frame.height)
+                return contentSize
+            case .vertical:
+                var contentSizeHeight: CGFloat = self.leadingSpacing*2 // Leading & trailing spacing
+                contentSizeHeight += CGFloat(numberOfItems-1)*self.actualInteritemSpacing // Interitem spacing
+                contentSizeHeight += CGFloat(numberOfItems)*self.actualItemSize.height // Item sizes
+                let contentSize = CGSize(width: collectionView.frame.width, height: contentSizeHeight)
+                return contentSize
             }
         }()
         self.adjustCollectionViewBounds()
@@ -154,8 +154,9 @@ class FSPagerViewLayout: UICollectionViewLayout {
             return proposedContentOffset
         }
         var proposedContentOffset = proposedContentOffset
+        let touchedContentOffset: CGPoint = collectionView.panGestureRecognizer.location(in: collectionView)
         
-        func calculateTargetOffset(by proposedOffset: CGFloat, boundedOffset: CGFloat) -> CGFloat {
+        func calculateTargetOffset(by proposedOffset: CGFloat, touchedOffset: CGFloat, boundedOffset: CGFloat) -> CGFloat {
             var targetOffset: CGFloat
             if pagerView.decelerationDistance == FSPagerView.automaticDistance {
                 if abs(velocity.x) >= 0.3 {
@@ -168,9 +169,9 @@ class FSPagerViewLayout: UICollectionViewLayout {
                 let extraDistance = max(pagerView.decelerationDistance-1, 0)
                 switch velocity.x {
                 case 0.3 ... CGFloat.greatestFiniteMagnitude:
-                    targetOffset = ceil(collectionView.contentOffset.x/self.itemSpacing+CGFloat(extraDistance)) * self.itemSpacing
+                    targetOffset = ceil(touchedOffset/self.itemSpacing+CGFloat(extraDistance)) * self.itemSpacing
                 case -CGFloat.greatestFiniteMagnitude ... -0.3:
-                    targetOffset = floor(collectionView.contentOffset.x/self.itemSpacing-CGFloat(extraDistance)) * self.itemSpacing
+                    targetOffset = floor(touchedOffset/self.itemSpacing-1-CGFloat(extraDistance)) * self.itemSpacing
                 default:
                     targetOffset = round(proposedOffset/self.itemSpacing) * self.itemSpacing
                 }
@@ -184,14 +185,14 @@ class FSPagerViewLayout: UICollectionViewLayout {
                 return proposedContentOffset.x
             }
             let boundedOffset = collectionView.contentSize.width-self.itemSpacing
-            return calculateTargetOffset(by: proposedContentOffset.x, boundedOffset: boundedOffset)
+            return calculateTargetOffset(by: proposedContentOffset.x, touchedOffset: touchedContentOffset.x, boundedOffset: boundedOffset)
         }()
         let proposedContentOffsetY: CGFloat = {
             if self.scrollDirection == .horizontal {
                 return proposedContentOffset.y
             }
             let boundedOffset = collectionView.contentSize.height-self.itemSpacing
-            return calculateTargetOffset(by: proposedContentOffset.y, boundedOffset: boundedOffset)
+            return calculateTargetOffset(by: proposedContentOffset.y, touchedOffset: touchedContentOffset.y, boundedOffset: boundedOffset)
         }()
         proposedContentOffset = CGPoint(x: proposedContentOffsetX, y: proposedContentOffsetY)
         return proposedContentOffset
@@ -258,7 +259,7 @@ class FSPagerViewLayout: UICollectionViewLayout {
     
     fileprivate func commonInit() {
         #if !os(tvOS)
-            NotificationCenter.default.addObserver(self, selector: #selector(didReceiveNotification(notification:)), name: UIDevice.orientationDidChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveNotification(notification:)), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
         #endif
     }
     
@@ -292,7 +293,7 @@ class FSPagerViewLayout: UICollectionViewLayout {
         attributes.zIndex = Int(self.numberOfItems)-Int(attributes.position)
         transformer.applyTransform(to: attributes)
     }
-
+    
 }
 
 
